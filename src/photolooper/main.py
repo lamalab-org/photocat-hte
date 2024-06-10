@@ -306,6 +306,9 @@ def main(global_config_path, experiment_config_path):
 
                 ax[1].set_xlabel("time / s")
                 ax[0].set_ylabel("O2 / uM/L")
+                ax[0].set_title(
+                    f'Current O2 concentration, {df["uM_1"].values[-1]:.3f} uM/L'
+                )
                 ax[1].set_ylabel("T / C")
                 fig.tight_layout()
                 fig.savefig(
