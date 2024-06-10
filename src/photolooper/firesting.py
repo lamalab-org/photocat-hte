@@ -1,4 +1,6 @@
 from pyrolib import PyroDevice
+import io
+from contextlib import redirect_stdout
 
 
 def measure_firesting(port: str) -> dict:
@@ -12,10 +14,13 @@ def measure_firesting(port: str) -> dict:
     Returns:
         dict: A dictionary containing the measured values.
     """
-    firesting = PyroDevice(port)
-    result = firesting.measure()
-    all_results = {}
-    for channel, data in result.items():
-        for k, v in data.items():
-            all_results[k + "_" + str(channel)] = v
-    return all_results
+    # we redirect the output to a string buffer
+    # because stdout prints warnings that we don't care about
+    with redirect_stdout(io.StringIO()) as _stdout:
+        firesting = PyroDevice(port)
+        result = firesting.measure()
+        all_results = {}
+        for channel, data in result.items():
+            for k, v in data.items():
+                all_results[k + "_" + str(channel)] = v
+        return all_results
