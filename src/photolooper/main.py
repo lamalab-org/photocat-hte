@@ -151,12 +151,12 @@ def write_instruction_csv(config: dict, instruction_dir: Union[str, Path] = ".")
     )
 
 
-def degassing_check(df, chemspeed_working_dir, start=0, end=30, threshold=20):
+def degassing_check(df, chemspeed_working_dir, start=0, end=30, threshold=10):
     # ensure that the o2 level is decaying
     # If the value of t=0 is less than 20 yM/L bigger than t = 30 s
     df_degas = df[df["status"] == "DEGASSING"]
-    start_o2 = df_degas["uM_1"].values[0]
-    end_o2 = df_degas["uM_1"].values[30]
+    start_o2 = df_degas["uM_1"].values[start]
+    end_o2 = df_degas["uM_1"].values[end]
 
     status = start_o2 - end_o2 > threshold
 
