@@ -152,9 +152,6 @@ def fit_data(data_df, filename=None):
     rxn_start = find_nearest(time, rxn_subset["duration"].values[0])[0]
     rxn_end = find_nearest(time, rxn_subset["duration"].values[-1])[0]
 
-    print(rxn_start, rxn_end)
-    print(time[rxn_start], time[rxn_end])
-
     p_guess = np.array([o2_data[-1], 0.01, time[rxn_start] + 5])
     rate_law_fit = first_order_fitting_without_normalization(
         p_guess, data_corrected[rxn_start:rxn_end], plotting=True

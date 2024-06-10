@@ -27,6 +27,8 @@ The meaning of the parameters is:
 - `degassing_time`: time for degassing of the reaction solution prior to irradiation in `min`
 - `measurement_time`: time for measurement of the reaction while irradiated in `min`
 - `run` : determiner if the experiment defined by the values above is run (run : true) or not (run : false) --> utilized to set a break in the code to make it possible to change the lid of the vial after three performed reactions
+- `pre_reaction_baseline_time`: time in minutes for waiting prior to reaction
+- `post_reaction_baseline_time`: time in minutes for waiting post reaction
 
 
 An example file looks like 
@@ -43,6 +45,8 @@ An example file looks like
   degassing_time: 20
   measurement_time: 10 
   run: true 
+  pre_reaction_baseline_time: 15
+  post_reaction_baseline_time: 5
 - 
   name: MR-1
   voltage: 0.18
@@ -54,6 +58,8 @@ An example file looks like
   degassing_time: 20
   measurement_time: 10 
   run: false 
+  pre_reaction_baseline_time: 15
+  post_reaction_baseline_time: 5
 ```
 
 

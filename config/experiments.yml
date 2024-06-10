@@ -9,6 +9,8 @@
   degassing_time: 20
   measurement_time: 10 
   run: true 
+  pre_reaction_baseline_time: 15
+  post_reaction_baseline_time: 5
 - 
   name: MR-1
   voltage: 0.18
@@ -20,3 +22,5 @@
   degassing_time: 20
   measurement_time: 10 
   run: false 
+  pre_reaction_baseline_time: 15
+  post_reaction_baseline_time: 5
