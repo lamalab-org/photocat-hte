@@ -282,6 +282,7 @@ def main(global_config_path, experiment_config_path):
             df = pd.DataFrame(results)
 
             df["duration"] = df["timestamp"] - df["timestamp"].iloc[0]
+
             if len(df) > 1:
                 df["switch"] = [False, False] + [
                     df["status"].values[i - 1] != df["status"].values[i]
@@ -294,20 +295,60 @@ def main(global_config_path, experiment_config_path):
             if command not in set(
                 [Command.firesting_stop, Command.firesting_end, Command.pause]
             ):
-                fig, ax = plt.subplots(2, 1)
-                ax[0].scatter(df["duration"], df["uM_1"], s=0.01, marker="o")
+                fig, ax = plt.subplots(2, 1, figsize=(16, 8))
+                ax[0].scatter(df["duration"], df["uM_1"], s=0.01, marker="o", c="k")
                 ax[1].scatter(
-                    df["duration"], df["optical_temperature_2"], s=0.01, marker="o"
+                    df["duration"],
+                    df["optical_temperature_2"],
+                    s=0.01,
+                    marker="o",
+                    c="k",
                 )
 
-                for switch_time in switch_times:
-                    ax[0].axvline(switch_time)
-                    ax[1].axvline(switch_time)
+                for i, switch_time in enumerate(switch_times):
+                    ax[0].axvline(switch_time, c="k")
+                    ax[1].axvline(switch_time, c="k")
+                    switch_idx = df[df["duration"] == switch_time].index[0]
+
+                    if i == 0:
+                        # ax[0].axvspan(
+                        #     0,
+                        #     switch_time,
+                        #     alpha=0.2,
+                        #     label=df.iloc[switch_idx -2 ]['status'],
+                        #     color=f"C{i}",
+                        # )
+                        # ax[1].axvspan(
+                        #     0,
+                        #     switch_time,
+                        #     alpha=0.2,
+                        #     label=df.iloc[switch_idx -2 ]['status'],
+                        #                 color=f"C{i}",
+                        # )
+                        pass
+                    else:
+                        ax[0].axvspan(
+                            switch_times.values[i - 1],
+                            switch_time,
+                            alpha=0.2,
+                            label=df.iloc[switch_idx - 2]["status"],
+                            color=f"C{i}",
+                        )
+                        ax[1].axvspan(
+                            switch_times.values[i - 1],
+                            switch_time,
+                            alpha=0.2,
+                            label=df.iloc[switch_idx - 2]["status"],
+                            color=f"C{i}",
+                        )
 
                 ax[1].set_xlabel("time / s")
                 ax[0].set_ylabel("O2 / uM/L")
                 ax[1].set_ylabel("T / C")
+                ax[0].legend(loc="upper left")
                 fig.tight_layout()
+
+                fig.autofmt_xdate()
                 fig.savefig(
                     os.path.join(
                         global_configs["log_dir"], f"results_{config['name']}.png"
