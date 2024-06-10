@@ -341,6 +341,22 @@ def main(global_config_path, experiment_config_path):
                             label=df.iloc[switch_idx - 2]["status"],
                             color=f"C{i}",
                         )
+                    if i == len(switch_times) - 1:
+                        # fill until the end
+                        ax[0].axvspan(
+                            switch_time,
+                            df.iloc[-1]["duration"],
+                            alpha=0.2,
+                            label=df.iloc[-1]["status"],
+                            color=f"C{i+1}",
+                        )
+                        ax[1].axvspan(
+                            switch_time,
+                            df.iloc[-1]["duration"],
+                            alpha=0.2,
+                            label=df.iloc[-1]["status"],
+                            color=f"C{i+1}",
+                        )
 
                 ax[1].set_xlabel("time / s")
                 ax[0].set_ylabel("O2 / uM/L")
