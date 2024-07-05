@@ -126,8 +126,12 @@ def first_order_fitting_without_normalization(
         fig, ax = plt.subplots()
         ax.plot(x, y, ".")
         ax.plot(x, y_fit, linewidth=1)
+        ax.set_xlabel("time / s")
+        ax.set_ylabel("O2 / uM/L")
         if filename is not None:
             fig.savefig(filename, dpi=400)
+    
+    plt.close()
 
     return p.x
 
@@ -137,6 +141,7 @@ def fit_data(data_df, filename=None):
 
     # subset data to relevant statuses
     data_subset = data_df[data_df["status"].isin(["PREREACTION-BASELINE", "REACTION"])]
+    data_subset = data_subset[data_subset['command'].isin(['LAMP-ON', "FIRESTING-START"])]
     start = data_subset["duration"].values[0]
     end = data_subset[data_subset["status"] == "REACTION"]["duration"].values[0]
     time = data_subset["duration"].values
@@ -154,7 +159,7 @@ def fit_data(data_df, filename=None):
 
     p_guess = np.array([o2_data[-1], 0.01, time[rxn_start] + 5])
     rate_law_fit = first_order_fitting_without_normalization(
-        p_guess, data_corrected[rxn_start:rxn_end], plotting=True
+        p_guess, data_corrected[rxn_start:rxn_end], plotting=True, filename=filename
     )
 
     return rate_law_fit[1]
