@@ -10,9 +10,80 @@ import json
 
 from photolooper.firesting import measure_firesting
 from photolooper.powersupply import switch_off, switch_on
-from photolooper.status import Command, Status, obtain_command, obtain_status
+from photolooper.status import Command, Status
 from photolooper.utils import find_com_port, send_to_arduino
 from photolooper.fit import fit_data
+
+
+def obtain_status(working_directory: Union[str, Path] = "."):
+    """
+    Obtain the status of the photolooper. This file is written by the
+    AutoSuite program.
+
+    Args:
+        working_directory (Union[str, Path], optional):
+            The working directory. Defaults to ".".
+
+    Returns:
+        Status: The status of the photolooper.
+    """
+    with open(os.path.join(working_directory, "firesting_status.csv"), "r") as handle:
+        content = handle.read()
+
+    if "DEGASSING" in content:
+        return Status.degassing
+
+    if "PREREACTION-BASELINE" in content:
+        return Status.prereaction_baseline
+
+    if "POSTREACTION-BASELINE" in content:
+        return Status.postreaction_baseline
+
+    if "REACTION" in content:
+        return Status.reaction
+
+
+
+    return Status.other
+
+
+def obtain_command(working_directory: Union[str, Path] = "."):
+    """
+    Obtain the command of the photolooper. This file is written by the
+    AutoSuite program.
+
+    Args:
+        working_directory (Union[str, Path], optional):
+            The working directory. Defaults to ".".
+
+    Returns:
+        Command: The command of the photolooper.
+    """
+    with open(os.path.join(working_directory, "command.csv"), "r") as handle:
+        content = handle.read()
+
+    if "FIRESTING-START" in content:
+        return Command.firesting_start
+
+    if "FIRESTING-STOP" in content:
+        return Command.firesting_stop
+
+    if "MEASURE" in content:
+        return Command.measure
+
+    if "LAMP-ON" in content:
+        return Command.lamp_on
+
+    if "LAMP-OFF" in content:
+        return Command.lamp_off
+
+    if "FIRESTING-END" in content:
+        return Command.firesting_end
+
+    if "PAUSE" in content:
+        return Command.pause
+
+    return Command.other
 
 
 def seed_status_and_command_files(working_directory: Union[str, Path] = "."):
@@ -84,17 +155,13 @@ def write_instruction_csv(config: dict, instruction_dir: Union[str, Path] = ".")
 
 def degassing_check(df, chemspeed_working_dir, start=5, end=-1, threshold=5):
     # ensure that the o2 level is decaying
-    # If the value of t=0 is less than 5 yM/L bigger than t = 180 s
+    # If the value of t=0 is less than 5 yM/L bigger than t = 150 s
     df_degas = df[df["status"] == "DEGASSING"]
     start_o2 = df_degas["uM_1"].values[start]
     end_o2 = df_degas["uM_1"].values[end]
 
-    print(
-        f"O2 at {df_degas['duration'].values[start]}: {df_degas['uM_1'].values[start]:.3f}"
-    )
-    print(
-        f"O2 at {df_degas['duration'].values[end]}: {df_degas['uM_1'].values[end]:.3f}"
-    )
+    print(f"O2 at {df_degas['duration'].values[start]}: {df_degas['uM_1'].values[start]:.3f}")
+    print(f"O2 at {df_degas['duration'].values[end]}: {df_degas['uM_1'].values[end]:.3f}")
     status = start_o2 - end_o2 > threshold
     if status:
         status = "true"
@@ -112,6 +179,7 @@ def degassing_check(df, chemspeed_working_dir, start=5, end=-1, threshold=5):
 def main(global_config_path, experiment_config_path):
     previous_command = None
     previous_status = None
+    has_measured = False
     global_configs = read_yaml(global_config_path)
     global_configs["chemspeed_working_dir"] = os.path.normpath(
         global_configs["chemspeed_working_dir"]
@@ -133,6 +201,7 @@ def main(global_config_path, experiment_config_path):
         raise Exception("🚨 Lamp port not found")
 
     global_configs["lamp_port"]["port"] = lamp_port
+
 
     arduino_port = find_com_port(global_configs["arduino_port"]["name"])
     if arduino_port is None:
@@ -173,7 +242,7 @@ def main(global_config_path, experiment_config_path):
             status = obtain_status(
                 working_directory=global_configs["chemspeed_working_dir"]
             )
-
+            
             if command != previous_command:
                 if command == Command.firesting_end:
                     # if the autosuite waits and the python code continues running and reading the firesting_end command, it will continue breaking the executions
@@ -191,9 +260,7 @@ def main(global_config_path, experiment_config_path):
                             "rate": rate,
                             "datetime": df["datetime"].to_list(),
                             "uM_1": df["uM_1"].to_list(),
-                            "optical_temperature_2": df[
-                                "optical_temperature_2"
-                            ].to_list(),
+                            "optical_temperature_2": df["optical_temperature_2"].to_list(),
                             "status": df["status"].to_list(),
                         }
 
@@ -214,18 +281,15 @@ def main(global_config_path, experiment_config_path):
                     switch_off(global_configs["lamp_port"]["port"])
 
                 if command == Command.lamp_on:
-                    switch_on(
-                        global_configs["lamp_port"]["port"],
-                        global_configs["arduino_port"]["port"],
-                        config["voltage"],
-                    )
+                    switch_on(global_configs["lamp_port"]["port"], global_configs["arduino_port"]["port"], config["voltage"])
 
             if status != previous_status:
                 if status == Status.degassing:
-                    send_to_arduino(global_configs["arduino_port"]["port"], "1")
+                    send_to_arduino(global_configs["arduino_port"]["port"], '1')
                 else:
-                    if previous_status == Status.degassing:
-                        send_to_arduino(global_configs["arduino_port"]["port"], "0")
+                    if previous_status == Status.degassing: 
+                        send_to_arduino(global_configs["arduino_port"]["port"], '0')
+
 
             if command not in set(
                 [Command.firesting_stop, Command.firesting_end, Command.pause]
@@ -236,6 +300,7 @@ def main(global_config_path, experiment_config_path):
                 print(
                     f"uO2: {firesting_results['uM_1']} optical temperature: {firesting_results['optical_temperature_2']}"
                 )
+                has_measured = True
 
             else:
                 firesting_results = {}
@@ -267,7 +332,7 @@ def main(global_config_path, experiment_config_path):
                 ax[1].scatter(
                     df["duration"],
                     df["optical_temperature_2"],
-                    s=0.01,
+                    s=0.05,
                     marker="o",
                     c="k",
                 )
@@ -278,8 +343,23 @@ def main(global_config_path, experiment_config_path):
                     switch_idx = df[df["duration"] == switch_time].index[0]
 
                     if i == 0:
+                        # ax[0].axvspan(
+                        #     0,
+                        #     switch_time,
+                        #     alpha=0.2,
+                        #     label=df.iloc[switch_idx -2 ]['status'],
+                        #     color=f"C{i}",
+                        # )
+                        # ax[1].axvspan(
+                        #     0,
+                        #     switch_time,
+                        #     alpha=0.2,
+                        #     label=df.iloc[switch_idx -2 ]['status'],
+                        #                 color=f"C{i}",
+                        # )
                         pass
                     else:
+                   
                         ax[0].axvspan(
                             switch_times.values[i - 1],
                             switch_time,
@@ -336,16 +416,17 @@ def main(global_config_path, experiment_config_path):
                 index=False,
             )
 
-            if status == Status.degassing:
+            if status == Status.degassing and has_measured:
                 degassing_frame = df[df["status"] == "DEGASSING"]
+                degassing_frame = degassing_frame.dropna(subset=['uM_1'])
                 start = degassing_frame["duration"].values[0]
                 end = degassing_frame["duration"].values[-1]
                 duration = end - start
-                if duration > 180 and not degassing_checked:
+                if duration > 150 and not degassing_checked:
                     degassing_checked = True
-                    degassing_check(df, global_configs["chemspeed_working_dir"])
+                    degassing_check(degassing_frame, global_configs["chemspeed_working_dir"])
 
             time.sleep(global_configs["sleep_time"])
-
+            
             previous_command = command
             previous_status = status
