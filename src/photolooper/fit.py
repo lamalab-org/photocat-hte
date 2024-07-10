@@ -1,15 +1,14 @@
 import math
-
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.optimize import least_squares
+import Reaction_ODE_Fitting as ode
 
 
 def align_time(df):
     df["duration"] = (
         df["duration"] - df[df["status"] == "DEGASSING"]["duration"].values[0]
     )
-
 
 def find_nearest(array, values):
     """
@@ -131,30 +130,123 @@ def first_order_fitting_without_normalization(
 
     return p.x
 
+def preprocess_data(data_df, offset):
+    '''Pre-processing data by selecting relevant portion of data and then performing
+    baseline correction based on pre-reaction phase.
+    '''
 
-def fit_data(data_df, filename=None):
-    """Fit data to first order rate law"""
+    align_time(data_df)
 
     # subset data to relevant statuses
-    data_subset = data_df[data_df["status"].isin(["PREREACTION-BASELINE", "REACTION"])]
+    data_subset = data_df[(data_df['status'].isin(['PREREACTION-BASELINE', 'REACTION'])) &
+                (data_df['command'].isin(['LAMP-ON', 'FIRESTING-START']))]
+
     start = data_subset["duration"].values[0]
     end = data_subset[data_subset["status"] == "REACTION"]["duration"].values[0]
     time = data_subset["duration"].values
     o2_data = data_subset["uM_1"].values
 
     data_corrected = pre_signal_fitting(
-        np.c_[time, o2_data], start, end, 3, plotting=False
-    )
+        np.c_[time, o2_data], start, end, 2, plotting=False)
 
-    # guess for fitting of first order rate law (right orders of magnitude for p[0] and p[1], p[3] is equal to start time)
     rxn_subset = data_subset[data_subset["status"] == "REACTION"]
 
-    rxn_start = find_nearest(time, rxn_subset["duration"].values[0])[0]
+    rxn_start = find_nearest(time, rxn_subset["duration"].values[0] + offset)[0] 
     rxn_end = find_nearest(time, rxn_subset["duration"].values[-1])[0]
 
-    p_guess = np.array([o2_data[-1], 0.01, time[rxn_start] + 5])
-    rate_law_fit = first_order_fitting_without_normalization(
-        p_guess, data_corrected[rxn_start:rxn_end], plotting=True
-    )
+    return data_subset, data_corrected, rxn_start, rxn_end
 
-    return rate_law_fit[1]
+def plotting_fit_results(p, time_reaction, data_reaction, initial_state, matrix):
+    '''Plotting of fit results.
+    '''
+
+    fig, ax = plt.subplots()
+
+    random_value = np.random.rand()
+    cmap = plt.get_cmap('plasma')
+    random_color = cmap(random_value)
+
+    y_fit = ode.ODE_matrix_fit_func(p, initial_state, time_reaction, matrix, idx = 2)
+    ax.plot(time_reaction, data_reaction, '.', color = random_color)
+    ax.plot(time_reaction, y_fit, color = random_color)
+
+    plt.show()
+
+def fit_data(data_df, filename=None, offset = 0,
+             reaction_string = ['A > B, k1',
+                                'B > C, k2'], 
+             bounds = [[0, 1], [0.15, 0.15]],
+             idx_for_rate_constant = 0,
+             idx_for_fitting = 2,
+             plotting = False,
+             return_full = False ):
+    """
+    Fitting data to arbitrary reaction model using 'Reaction_ODE_Fitting' library. 
+    Reaction string is specified, in this case A >k1> B >k2> C, to model induction period due to O2 diffusion to sensor. 
+    Experimental data is fitted to concentration profile of C (idx_for_fitting = 2). 
+    k1 is optimized and k2 is fixed to 0.15 (bounds), k1 is returned (idx_for_rate_constante = 0). 
+    The bounds for k2 might have to be adjusted for other reactions, we will have to take a look at this with future data.
+    return_full is for interfacing with other code for debugging.
+
+    Args:
+        data_df:
+            Pandas dataframe containing experimental data.
+        filename (optional):
+            filename 
+        offset (optional):
+            Offset for fitting of experimental data (for example to skip induction period). However, using
+            the offset seems to lower the quality of the fit.
+        reaction_string (optional):
+            Reaction string describing reaction sequence that is fitted to data.
+        idx_for_rate_constant (optional):
+            idx to select rate constant from obtained array. Depending on reaction string, array has as many entries as 
+            there are k values. Default is that first rate constant is picked.
+        idx_for_fitting (optional):
+            idx to select which part of model is fitted to experimental data. Default is that species "C" (idx = 2) is 
+            fitted to data.
+        plotting (optional):
+            Flag to control if plot is generated.
+        return_full (optional):
+            Flag to control is full output is returned (default = False).
+    """
+
+    data_subset, data_corrected, rxn_start, rxn_end = preprocess_data(data_df, offset = offset)
+
+    time_reaction = data_corrected[:,0][rxn_start:rxn_end] - data_corrected[:,0][rxn_start]
+    data_reaction = data_corrected[:,1][rxn_start:rxn_end]
+
+    idx = np.argmax(data_reaction)
+    time_reaction = time_reaction[:idx]
+    data_reaction = data_reaction[:idx]
+
+    p, matrix, initial_state, residual = ode.ODE_fitting(data_reaction, time_reaction, 
+                                                         reaction_string, idx = idx_for_fitting,
+                                                         bounds_arr = bounds)
+    
+    rate_constant = p[idx_for_rate_constant]
+
+
+    if plotting is True:
+        plotting_fit_results(p, time_reaction, data_reaction, initial_state, matrix)
+
+    if return_full is True:
+        return rate_constant, data_subset, data_corrected, rxn_start, rxn_end
+    
+    else:
+        return rate_constant
+
+
+if __name__ == '__main__':
+    '''Testing code with Q to T data.
+    '''
+    import os 
+    import pandas as pd
+
+    def import_data(file_name):
+        df = pd.read_csv(file_name)
+        return df
+
+    for file in os.listdir('data/MRG-059_Q_to_T'):
+        if file.endswith('.csv'):
+            df = import_data(f'data/MRG-059_Q_to_T/{file}')
+            fit_data(df, plotting = True)
