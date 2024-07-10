@@ -2,7 +2,7 @@ import math
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.optimize import least_squares
-import Reaction_ODE_Fitting as ode
+import photolooper.rxn_ode_fitting as ode
 
 
 def align_time(df):
