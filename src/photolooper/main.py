@@ -236,7 +236,7 @@ def main(global_config_path, experiment_config_path):
                         df,
                         os.path.join(
                             global_configs["log_dir"],
-                            f"fit_{config['name']}.png",
+                            f"fit_{config['name']}.png", plotting = True
                         ),
                     )
 

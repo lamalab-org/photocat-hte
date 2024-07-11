@@ -169,8 +169,10 @@ def plotting_fit_results(p, time_reaction, data_reaction, initial_state, matrix)
     y_fit = ode.ODE_matrix_fit_func(p, initial_state, time_reaction, matrix, idx = 2)
     ax.plot(time_reaction, data_reaction, '.', color = random_color)
     ax.plot(time_reaction, y_fit, color = random_color)
+    ax.set_xlabel('Time / s')
+    ax.set_ylabel(r'Oxygen / $\mu$mol/L')
 
-    plt.show()
+    return fig
 
 def fit_data(data_df, filename=None, offset = 0,
              reaction_string = ['A > B, k1',
@@ -179,7 +181,7 @@ def fit_data(data_df, filename=None, offset = 0,
              idx_for_rate_constant = 0,
              idx_for_fitting = 2,
              plotting = False,
-             return_full = False ):
+             return_full = False):
     """
     Fitting data to arbitrary reaction model using 'Reaction_ODE_Fitting' library. 
     Reaction string is specified, in this case A >k1> B >k2> C, to model induction period due to O2 diffusion to sensor. 
@@ -227,7 +229,9 @@ def fit_data(data_df, filename=None, offset = 0,
 
 
     if plotting is True:
-        plotting_fit_results(p, time_reaction, data_reaction, initial_state, matrix)
+        fig = plotting_fit_results(p, time_reaction, data_reaction, initial_state, matrix)
+        if filename is not None:
+            fig.savefig(filename, dpi=400)
 
     if return_full is True:
         return rate_constant, data_subset, data_corrected, rxn_start, rxn_end
