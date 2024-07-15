@@ -18,3 +18,4 @@ class Status(enum.Enum):
     reaction = "REACTION"
     postreaction_baseline = "POSTREACTION-BASELINE"
     other = "OTHER"
+    degassing_end = "DEGASSING_END"

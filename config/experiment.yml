@@ -1,0 +1,52 @@
+- 
+  name: MRG-059-T
+  voltage: 0.18
+  volume_water: 5.1
+  volume_sacrificial_oxidant: 0.85
+  volume_ruthenium_solution:  0.85
+  volume_buffer_solution_1: 0.85
+  volume_buffer_solution_2: 0.85
+  degassing_time: 20
+  measurement_time: 10 
+  run: "true" 
+  pre_reaction_baseline_time: 15
+  post_reaction_baseline_time: 5
+- 
+  name: MRG-059-U
+  voltage: 0.18
+  volume_water: 5.1
+  volume_sacrificial_oxidant: 0.85
+  volume_ruthenium_solution:  0.85
+  volume_buffer_solution_1: 0.85
+  volume_buffer_solution_2: 0.85
+  degassing_time: 20
+  measurement_time: 10 
+  run: "true" 
+  pre_reaction_baseline_time: 15
+  post_reaction_baseline_time: 5
+- 
+  name: MRG-059-V
+  voltage: 0.18
+  volume_water: 5.1
+  volume_sacrificial_oxidant: 0.85
+  volume_ruthenium_solution:  0.85
+  volume_buffer_solution_1: 0.85
+  volume_buffer_solution_2: 0.85
+  degassing_time: 20
+  measurement_time: 10 
+  run: "true" 
+  pre_reaction_baseline_time: 15
+  post_reaction_baseline_time: 5
+- 
+  name: MRG-059-pause
+  voltage: 0.18
+  volume_water: 0.1
+  volume_sacrificial_oxidant: 0.1
+  volume_ruthenium_solution:  0.1
+  volume_buffer_solution_1: 0.1
+  volume_buffer_solution_2: 0.1
+  degassing_time: 20
+  measurement_time: 10 
+  run: "false" 
+  pre_reaction_baseline_time: 15
+  post_reaction_baseline_time: 5

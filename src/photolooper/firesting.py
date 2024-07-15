@@ -1,6 +1,6 @@
 from pyrolib import PyroDevice
 import io
-from contextlib import redirect_stdout
+from contextlib import redirect_stdout, redirect_stderr
 
 
 def measure_firesting(port: str) -> dict:
@@ -16,11 +16,12 @@ def measure_firesting(port: str) -> dict:
     """
     # we redirect the output to a string buffer
     # because stdout prints warnings that we don't care about
-    with redirect_stdout(io.StringIO()) as _stdout:
-        firesting = PyroDevice(port)
-        result = firesting.measure()
-        all_results = {}
-        for channel, data in result.items():
-            for k, v in data.items():
-                all_results[k + "_" + str(channel)] = v
-        return all_results
+    with redirect_stderr(io.StringIO()) as _stderr:
+        with redirect_stdout(io.StringIO()) as _stdout:
+            firesting = PyroDevice(port)
+            result = firesting.measure()
+            all_results = {}
+            for channel, data in result.items():
+                for k, v in data.items():
+                    all_results[k + "_" + str(channel)] = v
+            return all_results

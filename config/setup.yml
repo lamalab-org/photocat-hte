@@ -1,8 +1,10 @@
-instruction_dir: /path/to/instructions
+instruction_dir:  "C:\\Users\\Operator\\Desktop\\Michael\\HTE photocatalysis project\\tests for writing of csv from AutoSuite"
 firesting_port: 
   name: "USB Serial Port"
 lamp_port: 
   name: "USB-SERIAL CH340"
-sleep_time: 1
-log_dir: /path/to/logs
-chemspeed_working_dir: /path/to/chemspeed
+arduino_port: 
+  name: "Arduino"
+sleep_time: 0
+log_dir:  "C:\\Users\\Operator\\Documents\\photcat_hte\\photocat-hte\\experiments\\logs"
+chemspeed_working_dir:  "C:\\Users\\Operator\\Desktop\\Michael\\HTE photocatalysis project\\tests for writing of csv from AutoSuite"

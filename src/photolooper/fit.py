@@ -125,8 +125,12 @@ def first_order_fitting_without_normalization(
         fig, ax = plt.subplots()
         ax.plot(x, y, ".")
         ax.plot(x, y_fit, linewidth=1)
+        ax.set_xlabel("time / s")
+        ax.set_ylabel("O2 / uM/L")
         if filename is not None:
             fig.savefig(filename, dpi=400)
+    
+    plt.close()
 
     return p.x
 
@@ -138,9 +142,8 @@ def preprocess_data(data_df, offset):
     align_time(data_df)
 
     # subset data to relevant statuses
-    data_subset = data_df[(data_df['status'].isin(['PREREACTION-BASELINE', 'REACTION'])) &
-                (data_df['command'].isin(['LAMP-ON', 'FIRESTING-START']))]
-
+    data_subset = data_df[data_df["status"].isin(["PREREACTION-BASELINE", "REACTION"])]
+    data_subset = data_subset[data_subset['command'].isin(['LAMP-ON', "FIRESTING-START"])]
     start = data_subset["duration"].values[0]
     end = data_subset[data_subset["status"] == "REACTION"]["duration"].values[0]
     time = data_subset["duration"].values
@@ -238,19 +241,3 @@ def fit_data(data_df, filename=None, offset = 0,
     
     else:
         return rate_constant
-
-
-if __name__ == '__main__':
-    '''Testing code with Q to T data.
-    '''
-    import os 
-    import pandas as pd
-
-    def import_data(file_name):
-        df = pd.read_csv(file_name)
-        return df
-
-    for file in os.listdir('data/MRG-059_Q_to_T'):
-        if file.endswith('.csv'):
-            df = import_data(f'data/MRG-059_Q_to_T/{file}')
-            fit_data(df, plotting = True)

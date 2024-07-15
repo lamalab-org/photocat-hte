@@ -2,6 +2,7 @@ import sys
 import glob
 import serial
 import serial.tools.list_ports
+import time
 
 
 def serial_ports():
@@ -52,6 +53,13 @@ def find_com_port(name: str) -> str:
         if name in p.description:
             return p.device
     return None
+
+
+def send_to_arduino(port, direction):
+    ard = serial.Serial(port=port, baudrate=9600)
+    time.sleep(2)
+    ard.write(direction.encode("utf-8"))
+    ard.close()
 
 
 if __name__ == "__main__":
