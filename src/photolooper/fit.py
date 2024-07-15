@@ -7,8 +7,10 @@ import pandas as pd
 
 
 def align_time(df):
+    time_zero_subset = df[df["command"].isin(["FIRESTING-START"])]
+    # first degassing is not the one we want to use for referencing
     df["duration"] = (
-        df["duration"] - df[df["status"] == "DEGASSING"]["duration"].values[0]
+        df["duration"] - time_zero_subset[time_zero_subset["status"] == "DEGASSING"]["duration"].values[0]
     )
 
 
@@ -175,11 +177,13 @@ def plotting_fit_results(p, time_reaction, data_reaction, initial_state, matrix)
     cmap = plt.get_cmap("plasma")
     random_color = cmap(random_value)
 
-    y_fit = ode.ODE_matrix_fit_func(p, initial_state, time_reaction, matrix, idx=2)
+    y_fit = ode.ode_matrix_fit_func(p, initial_state, time_reaction, matrix, idx=2)
     ax.plot(time_reaction, data_reaction, ".", color=random_color)
     ax.plot(time_reaction, y_fit, color=random_color)
     ax.set_xlabel("Time / s")
     ax.set_ylabel(r"Oxygen / $\mu$mol/L")
+
+    plt.close()
 
     return fig
 
@@ -239,7 +243,7 @@ def fit_data(
     time_reaction = time_reaction[:idx]
     data_reaction = data_reaction[:idx]
 
-    p, matrix, initial_state, _residual = ode.ODE_fitting(
+    p, matrix, initial_state, _residual = ode.ode_fitting(
         data_reaction,
         time_reaction,
         reaction_string,
