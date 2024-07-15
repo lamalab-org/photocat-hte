@@ -30,6 +30,9 @@ def obtain_status(working_directory: Union[str, Path] = "."):
     with open(os.path.join(working_directory, "firesting_status.csv"), "r") as handle:
         content = handle.read()
 
+    if "DEGASSING_END" in content:
+        return Status.degassing_end
+
     if "DEGASSING" in content:
         return Status.degassing
 
@@ -41,6 +44,8 @@ def obtain_status(working_directory: Union[str, Path] = "."):
 
     if "REACTION" in content:
         return Status.reaction
+
+
 
     return Status.other
 
@@ -158,12 +163,8 @@ def degassing_check(df, chemspeed_working_dir, start=5, end=-1, threshold=5):
     start_o2 = df_degas["uM_1"].values[start]
     end_o2 = df_degas["uM_1"].values[end]
 
-    print(
-        f"O2 at {df_degas['duration'].values[start]}: {df_degas['uM_1'].values[start]:.3f}"
-    )
-    print(
-        f"O2 at {df_degas['duration'].values[end]}: {df_degas['uM_1'].values[end]:.3f}"
-    )
+    print(f"O2 at {df_degas['duration'].values[start]}: {df_degas['uM_1'].values[start]:.3f}")
+    print(f"O2 at {df_degas['duration'].values[end]}: {df_degas['uM_1'].values[end]:.3f}")
     status = start_o2 - end_o2 > threshold
     if status:
         status = "true"
@@ -191,6 +192,7 @@ def main(global_config_path, experiment_config_path):
     )
     configs = read_yaml(experiment_config_path)
 
+    # perform checks that COM ports can be found for firesting, lamp and arduino
     firestring_port = find_com_port(global_configs["firesting_port"]["name"])
 
     if firestring_port is None:
@@ -214,8 +216,13 @@ def main(global_config_path, experiment_config_path):
     if not os.path.exists(global_configs["log_dir"]):
         os.makedirs(global_configs["log_dir"])
 
+    # "seed" the experiment by turning lamp off and writing initial files for the 
+    # autosuite program
     switch_off(global_configs["lamp_port"]["port"])
     seed_status_and_command_files(global_configs["instruction_dir"])
+
+    # loop over all experimental configurations
+    # the loop and be also broken by setting config["run"] == "true" in an experimental config 
     for config in configs:
         print("🧪 Working on ", config)
         degassing_checked = False
@@ -236,24 +243,28 @@ def main(global_config_path, experiment_config_path):
         results = []
         switch_off(global_configs["lamp_port"]["port"])
         df = None
+
         while True and config["run"] == "true":
+            # at every iteration of the while loop we check for new input from the Autosuite program
             command = obtain_command(
                 working_directory=global_configs["chemspeed_working_dir"]
             )
             status = obtain_status(
                 working_directory=global_configs["chemspeed_working_dir"]
             )
-
+            
+            # we only perform actions on changes of commands
             if command != previous_command:
                 if command == Command.firesting_end:
                     # if the autosuite waits and the python code continues running and reading the firesting_end command, it will continue breaking the executions
                     if df is not None:
                         rate = fit_data(
                             df,
-                            os.path.join(
+                            filename=os.path.join(
                                 global_configs["log_dir"],
                                 f"fit_{config['name']}.png",
                             ),
+                            plotting=True
                         )
 
                         out_dict = {
@@ -261,9 +272,7 @@ def main(global_config_path, experiment_config_path):
                             "rate": rate,
                             "datetime": df["datetime"].to_list(),
                             "uM_1": df["uM_1"].to_list(),
-                            "optical_temperature_2": df[
-                                "optical_temperature_2"
-                            ].to_list(),
+                            "optical_temperature_2": df["optical_temperature_2"].to_list(),
                             "status": df["status"].to_list(),
                         }
 
@@ -284,59 +293,19 @@ def main(global_config_path, experiment_config_path):
                     switch_off(global_configs["lamp_port"]["port"])
 
                 if command == Command.lamp_on:
-                    switch_on(
-                        global_configs["lamp_port"]["port"],
-                        global_configs["arduino_port"]["port"],
-                        config["voltage"],
-                    )
+                    switch_on(global_configs["lamp_port"]["port"], global_configs["arduino_port"]["port"], config["voltage"])
 
+            # again, we only do things on status changes, the most relevant change is to toggle the degassing
             if status != previous_status:
                 if status == Status.degassing:
-                    send_to_arduino(global_configs["arduino_port"]["port"], "1")
+                    send_to_arduino(global_configs["arduino_port"]["port"], '1')
                 else:
-                    if previous_status == Status.degassing:
-                        send_to_arduino(global_configs["arduino_port"]["port"], "0")
+                    if previous_status == Status.degassing: 
+                        send_to_arduino(global_configs["arduino_port"]["port"], '0')
 
-            if command == Command.firesting_end:
-                # if the autosuite waits and the python code continues running and reading the firesting_end command, it will continue breaking the executions
-                if df is not None:
-                    rate = fit_data(
-                        df,
-                        os.path.join(
-                            global_configs["log_dir"],
-                            f"fit_{config['name']}.png",
-                            plotting=True,
-                        ),
-                    )
 
-                    out_dict = {
-                        "config": config,
-                        "rate": rate,
-                        "datetime": df["datetime"].to_list(),
-                        "uM_1": df["uM_1"].to_list(),
-                        "optical_temperature_2": df["optical_temperature_2"].to_list(),
-                        "status": df["status"].to_list(),
-                    }
-
-                    with open(
-                        os.path.join(
-                            global_configs["log_dir"],
-                            f"results_{config['name']}.json",
-                        ),
-                        "w",
-                    ) as handle:
-                        json.dump(out_dict, handle)
-
-                write_break_command(global_configs["instruction_dir"])
-                write_pause_status(global_configs["instruction_dir"])
-                break
-
-            if command == Command.lamp_off:
-                switch_off(global_configs["lamp_port"]["port"])
-
-            if command == Command.lamp_on:
-                switch_on(global_configs["lamp_port"]["port"], config["voltage"])
-
+            # if we do *not* not measure, we call the firesting (we do not want to have the sensor running all the time)
+            # we also plot the most important results and write them to a CSV file 
             if command not in set(
                 [Command.firesting_stop, Command.firesting_end, Command.pause]
             ):
@@ -405,6 +374,7 @@ def main(global_config_path, experiment_config_path):
                         # )
                         pass
                     else:
+                   
                         ax[0].axvspan(
                             switch_times.values[i - 1],
                             switch_time,
@@ -454,6 +424,7 @@ def main(global_config_path, experiment_config_path):
                 )
                 fig.autofmt_xdate()
                 plt.close()
+            
             df.to_csv(
                 os.path.join(
                     global_configs["log_dir"], f"results_{config['name']}.csv"
@@ -461,19 +432,21 @@ def main(global_config_path, experiment_config_path):
                 index=False,
             )
 
+            # we also perform a check that degassing works as expected
+            # for this we check that the O2 concentration changes as expected 
+            # we only consider the dataframe from the part where the firesting was actually measuring 
             if status == Status.degassing and has_measured:
                 degassing_frame = df[df["status"] == "DEGASSING"]
-                degassing_frame = degassing_frame.dropna(subset=["uM_1"])
+                degassing_frame = degassing_frame.dropna(subset=['uM_1']) # avoid that the degassing at the start of the campaign is taken into account
                 start = degassing_frame["duration"].values[0]
                 end = degassing_frame["duration"].values[-1]
                 duration = end - start
                 if duration > 150 and not degassing_checked:
                     degassing_checked = True
-                    degassing_check(
-                        degassing_frame, global_configs["chemspeed_working_dir"]
-                    )
+                    degassing_check(degassing_frame, global_configs["chemspeed_working_dir"])
 
             time.sleep(global_configs["sleep_time"])
-
+            
+            # to be able to track changes, we set the past status to the current status at the end of this while loop
             previous_command = command
             previous_status = status
