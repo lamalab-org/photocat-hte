@@ -155,7 +155,7 @@ def preprocess_data(data_df, offset):
     o2_data = data_subset["uM_1"].values
 
     data_corrected = pre_signal_fitting(
-        np.c_[time, o2_data], start, end, 2, plotting=False
+        np.c_[time, o2_data], start, end, 3, plotting=False
     )
 
     rxn_subset = data_subset[data_subset["status"] == "REACTION"]
@@ -166,18 +166,21 @@ def preprocess_data(data_df, offset):
     return data_subset, data_corrected, rxn_start, rxn_end
 
 
-def plotting_fit_results(p, time_reaction, data_reaction, initial_state, matrix):
+def plotting_fit_results(p, time_reaction, data_reaction, initial_state, matrix, idx,
+                         ax = None, fig = None, label = None, color = None):
     """Plotting of fit results."""
 
-    fig, ax = plt.subplots()
+    if ax is None:
+        fig, ax = plt.subplots()
 
-    random_value = np.random.rand()
-    cmap = plt.get_cmap("plasma")
-    random_color = cmap(random_value)
+    if color is None:
+        random_value = np.random.rand()
+        cmap = plt.get_cmap("plasma")
+        color = cmap(random_value)
 
-    y_fit = ode.ODE_matrix_fit_func(p, initial_state, time_reaction, matrix, idx=2)
-    ax.plot(time_reaction, data_reaction, ".", color=random_color)
-    ax.plot(time_reaction, y_fit, color=random_color)
+    y_fit = ode.ode_matrix_fit_func(p, initial_state, time_reaction, matrix, idx= idx)
+    ax.plot(time_reaction, data_reaction, ".", color=color, label = label)
+    ax.plot(time_reaction, y_fit, color=color, label = label)
     ax.set_xlabel("Time / s")
     ax.set_ylabel(r"Oxygen / $\mu$mol/L")
 
@@ -188,8 +191,8 @@ def fit_data(
     data_df: pd.DataFrame,
     filename: str = None,
     offset: int = 0,
-    reaction_string=["A > B, k1", "B > C, k2"],
-    bounds=[[0, 1], [0.15, 0.15]],
+    reaction_string=["A > B, k1", "B > C, k2", "C > D, k3"],
+    bounds=[[0, 1], [0, 1], [0, 1]],
     idx_for_rate_constant=0,
     idx_for_fitting=2,
     plotting: bool = False,
@@ -239,7 +242,7 @@ def fit_data(
     time_reaction = time_reaction[:idx]
     data_reaction = data_reaction[:idx]
 
-    p, matrix, initial_state, _residual = ode.ODE_fitting(
+    p, matrix, initial_state, _residual = ode.ode_fitting(
         data_reaction,
         time_reaction,
         reaction_string,
@@ -249,14 +252,33 @@ def fit_data(
 
     rate_constant = p[idx_for_rate_constant]
 
+    y_fit = ode.ode_matrix_fit_func(
+        p, 
+        initial_state, 
+        time_reaction, 
+        matrix, 
+        ravel = False
+    )
+
+    y_fit_selection = y_fit[:,idx_for_fitting]
+    max_rate = np.amax(np.diff(y_fit_selection))
+
     if plotting is True:
         fig = plotting_fit_results(
-            p, time_reaction, data_reaction, initial_state, matrix
+            p, time_reaction, data_reaction, initial_state, matrix, idx = idx_for_fitting
         )
         if filename is not None:
             fig.savefig(filename, dpi=400)
 
     if return_full is True:
-        return rate_constant, data_subset, data_corrected, rxn_start, rxn_end
+        output = {'p': p, 'max_rate': max_rate, 'time_reaction': time_reaction, 
+                  'data_reaction': data_reaction, 
+                  'initial_state': initial_state, 'matrix': matrix,
+                  'rate_constant': rate_constant, 'data_subset': data_subset,
+                  'data_corrected': data_corrected, 'rxn_start': rxn_start,
+                  'rxn_end': rxn_end, 'residual': _residual, 
+                  'idx_for_fitting': idx_for_fitting}
 
-    return rate_constant
+        return output
+
+    return max_rate
