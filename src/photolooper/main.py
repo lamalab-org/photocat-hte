@@ -258,15 +258,19 @@ def main(global_config_path, experiment_config_path):
                 if command == Command.firesting_end:
                     # if the autosuite waits and the python code continues running and reading the firesting_end command, it will continue breaking the executions
                     if df is not None:
-                        rate = fit_data(
-                            df,
-                            filename=os.path.join(
-                                global_configs["log_dir"],
-                                f"fit_{config['name']}.png",
-                            ),
-                            plotting=True
-                        )
-
+                        try:
+                            rate = fit_data(
+                                df,
+                                filename=os.path.join(
+                                    global_configs["log_dir"],
+                                    f"fit_{config['name']}.png",
+                                ),
+                                plotting=True
+                            )
+                        except Exception:
+                            print('Fitting failed')
+                            rate = None
+                            
                         out_dict = {
                             "config": config,
                             "rate": rate,
@@ -302,6 +306,8 @@ def main(global_config_path, experiment_config_path):
                 else:
                     if previous_status == Status.degassing: 
                         send_to_arduino(global_configs["arduino_port"]["port"], '0')
+
+
 
 
             # if we do *not* not measure, we call the firesting (we do not want to have the sensor running all the time)
