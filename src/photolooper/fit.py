@@ -7,8 +7,10 @@ import pandas as pd
 
 
 def align_time(df):
+    time_zero_subset = df[df["command"].isin(["FIRESTING-START"])]
+    # first degassing is not the one we want to use for referencing
     df["duration"] = (
-        df["duration"] - df[df["status"] == "DEGASSING"]["duration"].values[0]
+        df["duration"] - time_zero_subset[time_zero_subset["status"] == "DEGASSING"]["duration"].values[0]
     )
 
 
@@ -183,6 +185,8 @@ def plotting_fit_results(p, time_reaction, data_reaction, initial_state, matrix,
     ax.plot(time_reaction, y_fit, color=color, label = label)
     ax.set_xlabel("Time / s")
     ax.set_ylabel(r"Oxygen / $\mu$mol/L")
+
+    plt.close()
 
     return fig
 
