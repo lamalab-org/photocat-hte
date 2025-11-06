@@ -280,18 +280,20 @@ def residual_ode(P, initial, t, y, matrix, idx=None):
 
 
 def ode_fitting(
-    data, t, reaction_string, idx=None, upper_bound=1.0, bounds_arr=None, workers=1
+    data, t, reaction_string, idx=None, upper_bound=1.0, bounds_arr=None, workers=1, 
+    initial_state_multiplier = 4
 ):
     """Fitting of ODE function to data. idx indicates which column of the generated results is fit to the data.
 
     Use SciPy's differential_evolution to optimize the rate constants
-    by minimizing the residual between the ODE solution and the experimental data.
+    by minimizing the residual between the ODE solution and the experimental data. initial_state_multiplier 
+    adjusts initial concentration of reactant A to be high enough for accurate kinetic modelling.
     """
 
     matrix, k_number, reactant_number = reaction_string_to_matrix(reaction_string)
 
     initial_state = np.zeros(reactant_number)
-    initial_state[0] = np.amax(data)
+    initial_state[0] = np.amax(data) * initial_state_multiplier
 
     if bounds_arr is None:
         bounds_arr = []  # bounds for rate constants in optimization

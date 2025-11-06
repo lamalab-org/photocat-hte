@@ -308,6 +308,8 @@ def main(global_config_path, experiment_config_path):
                         send_to_arduino(global_configs["arduino_port"]["port"], '0')
 
 
+
+
             # if we do *not* not measure, we call the firesting (we do not want to have the sensor running all the time)
             # we also plot the most important results and write them to a CSV file 
             if command not in set(
