@@ -1,41 +1,111 @@
 - 
-  name: MRG-059-T
+  name: MRG-059-AA-01-1
   run: "true"
   voltage: 0.18
-  volume_water: 5.1
+  volume_water: 5.7
   volume_buffer_base: 0.85
   volume_buffer_acid: 0.85
   volume_sacrificial_oxidant: 0.85
-  volume_photosensitizer:  0.85
-  volume_catalyst:  0.85
+  volume_photosensitizer:  0.25
+  volume_catalyst:  0.00
   degassing_time: 20
   measurement_time: 10 
   pre_reaction_baseline_time: 15
   post_reaction_baseline_time: 5
 - 
-  name: MRG-059-T
-  run: "true" 
+  name: MRG-059-AA-01-2
+  run: "true"
   voltage: 0.18
-  volume_water: 5.1
+  volume_water: 5.7
   volume_buffer_base: 0.85
   volume_buffer_acid: 0.85
   volume_sacrificial_oxidant: 0.85
-  volume_photosensitizer:  0.85
-  volume_catalyst:  0.85
+  volume_photosensitizer:  0.25
+  volume_catalyst:  0.00
   degassing_time: 20
   measurement_time: 10 
   pre_reaction_baseline_time: 15
   post_reaction_baseline_time: 5
 - 
-  name: MRG-059-T
-  run: "true" 
+  name: MRG-059-AA-01-3
+  run: "true"
   voltage: 0.18
-  volume_water: 5.1
+  volume_water: 5.7
   volume_buffer_base: 0.85
   volume_buffer_acid: 0.85
   volume_sacrificial_oxidant: 0.85
-  volume_photosensitizer:  0.85
-  volume_catalyst:  0.85
+  volume_photosensitizer:  0.25
+  volume_catalyst:  0.00
+  degassing_time: 20
+  measurement_time: 10 
+  pre_reaction_baseline_time: 15
+  post_reaction_baseline_time: 5
+- 
+  name: MRG-059-AA-01-4
+  run: "true"
+  voltage: 0.18
+  volume_water: 5.7
+  volume_buffer_base: 0.85
+  volume_buffer_acid: 0.85
+  volume_sacrificial_oxidant: 0.85
+  volume_photosensitizer:  0.25
+  volume_catalyst:  0.00
+  degassing_time: 20
+  measurement_time: 10 
+  pre_reaction_baseline_time: 15
+  post_reaction_baseline_time: 5
+- 
+  name: MRG-059-AA-01-5
+  run: "true"
+  voltage: 0.18
+  volume_water: 5.7
+  volume_buffer_base: 0.85
+  volume_buffer_acid: 0.85
+  volume_sacrificial_oxidant: 0.85
+  volume_photosensitizer:  0.25
+  volume_catalyst:  0.00
+  degassing_time: 20
+  measurement_time: 10 
+  pre_reaction_baseline_time: 15
+  post_reaction_baseline_time: 5
+- 
+  name: MRG-059-AA-01-6
+  run: "true"
+  voltage: 0.18
+  volume_water: 5.7
+  volume_buffer_base: 0.85
+  volume_buffer_acid: 0.85
+  volume_sacrificial_oxidant: 0.85
+  volume_photosensitizer:  0.25
+  volume_catalyst:  0.00
+  degassing_time: 20
+  measurement_time: 10 
+  pre_reaction_baseline_time: 15
+  post_reaction_baseline_time: 5
+- 
+  name: MRG-059-AA-01-7
+  run: "true"
+  voltage: 0.18
+  volume_water: 5.7
+  volume_buffer_base: 0.85
+  volume_buffer_acid: 0.85
+  volume_sacrificial_oxidant: 0.85
+  volume_photosensitizer:  0.25
+  volume_catalyst:  0.00
+  degassing_time: 20
+  measurement_time: 10 
+  pre_reaction_baseline_time: 15
+  post_reaction_baseline_time: 5
+- 
+  name: MRG-059-AA-01-8
+  run: "true"
+  voltage: 0.18
+  volume_water: 5.7
+  volume_buffer_base: 0.85
+  volume_buffer_acid: 0.85
+  volume_sacrificial_oxidant: 0.85
+  volume_photosensitizer:  0.25
+  volume_catalyst:  0.00
   degassing_time: 20
   measurement_time: 10 
   pre_reaction_baseline_time: 15

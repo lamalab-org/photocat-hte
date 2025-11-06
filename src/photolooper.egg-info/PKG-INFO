@@ -1,0 +1,13 @@
+Metadata-Version: 1.1
+Name: photolooper
+Version: 0.2.0
+Summary: A package to control photocat HTE with separated photosensitizer and catalyst
+Home-page: https://github.com/MichaelRingleb/photocat-hte-prescreen
+Author: Kevin Maik Jablonka, Michael Ringleb
+Author-email: mail@kjablonka.com
+License: UNKNOWN
+Description: UNKNOWN
+Platform: UNKNOWN
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent

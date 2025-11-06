@@ -11,7 +11,7 @@ setuptools.setup(
     author_email="mail@kjablonka.com",
     description="A package to control photocat HTE with separated photosensitizer and catalyst",
     url="https://github.com/MichaelRingleb/photocat-hte-prescreen",
-    packages=setuptools.find_packages(where="src/"),
+    packages=setuptools.find_packages(where="src"),
     install_requires=["rd6006", "pyrolib"],
     package_dir={"": "src"},
     classifiers=[

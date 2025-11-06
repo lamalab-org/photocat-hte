@@ -121,7 +121,7 @@ def seed_status_and_command_files(working_directory: Union[str, Path] = "."):
     }
 
     write_instruction_csv(config, working_directory)
-
+    print(working_directory)
 
 def write_break_command(working_directory):
     with open(os.path.join(working_directory, "command.csv"), "w") as handle:
@@ -183,6 +183,7 @@ def degassing_check(df, chemspeed_working_dir, start=5, end=-1, threshold=5):
 
 
 def main(global_config_path, experiment_config_path):
+    print(" Experiment config path:" , experiment_config_path)
     previous_command = None
     previous_status = None
     has_measured = False
@@ -199,7 +200,8 @@ def main(global_config_path, experiment_config_path):
     firestring_port = find_com_port(global_configs["firesting_port"]["name"])
 
     if firestring_port is None:
-        raise Exception("🚨 Firesting port not found")
+        pass
+        #raise Exception("🚨 Firesting port not found")
 
     global_configs["firesting_port"]["port"] = firestring_port
 
@@ -366,7 +368,7 @@ def main(global_config_path, experiment_config_path):
                     ax[1].axvline(switch_time, c="k")
                     switch_idx = df[df["duration"] == switch_time].index[0]
 
-                    if i == 0:
+                    if i == 0: 
                         # ax[0].axvspan(
                         #     0,
                         #     switch_time,
